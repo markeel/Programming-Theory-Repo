@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 714732738491953869}
   - component: {fileID: 4946838346860395844}
   - component: {fileID: 7234073160982154196}
+  - component: {fileID: 749102542482012889}
   m_Layer: 0
   m_Name: Launcher
   m_TagString: Untagged
@@ -59,7 +60,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -2296599387292188260, guid: 69a7e5d846d85294080eaaa24406b9ae, type: 3}
+  - {fileID: 2100000, guid: dea93fedddfca1847b665e7cda18a9de, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -81,3 +82,17 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &749102542482012889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7639389702378223103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a337a9a0ff100a34dadc8a127b698345, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  manager: {fileID: 0}
+  riseTime: 1

@@ -22,4 +22,13 @@ public abstract class PlayerPiece : Piece
     {
         gameObject.transform.Find("tip").gameObject.SetActive(false);
     }
+
+    public abstract bool CanMove(int newRow, int newCol);
+
+    protected override void CompleteMove()
+    {
+        manager.TestForImpact();
+        manager.SetPlayerComplete();
+    }
+
 }

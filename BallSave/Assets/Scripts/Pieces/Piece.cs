@@ -6,8 +6,10 @@ public abstract class Piece : MonoBehaviour
 {
     public GameManager manager;
 
-    protected int row;
-    protected int col;
+    public int row { get; protected set; }
+
+    public int col { get; protected set; }
+
     private int nextRow;
     private int nextCol;
 
@@ -33,6 +35,7 @@ public abstract class Piece : MonoBehaviour
                 row = nextRow;
                 col = nextCol;
                 isMoving = false;
+                CompleteMove();
             }
             else
             {
@@ -72,5 +75,5 @@ public abstract class Piece : MonoBehaviour
         nextCol = newCol;
     }
 
-    public abstract bool CanMove(int newRow, int newCol);
+    protected abstract void CompleteMove();
 }

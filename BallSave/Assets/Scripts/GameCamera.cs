@@ -22,6 +22,9 @@ public class GameCamera : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!manager.IsPlayerTurn())
+            return;
+
         RaycastHit hit;
         int layerMask = 1 << 6;
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
@@ -40,11 +43,11 @@ public class GameCamera : MonoBehaviour
                 }
                 else
                 {
-                    if (manager.canMoveTo(data.row, data.col))
+                    if (manager.CanMoveTo(data.row, data.col))
                     {
                         if (Input.GetMouseButtonDown(0))
                         {
-                            manager.movePiece(data.row, data.col);
+                            manager.MovePiece(data.row, data.col);
                         }
                         else
                         {

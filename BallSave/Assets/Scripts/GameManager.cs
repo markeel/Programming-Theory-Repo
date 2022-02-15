@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -20,6 +21,17 @@ public class GameManager : MonoBehaviour
     private GameObject spherePrefab;
     [SerializeField]
     private GameObject blockerPrefab;
+    [SerializeField]
+    private GameObject launcherPrefab;
+    [SerializeField]
+    private GameObject missilePrefab;
+
+    [SerializeField]
+    private GameObject m_gameOverText;
+    [SerializeField]
+    private GameObject m_youWonText;
+    [SerializeField]
+    private GameObject m_replayButton;
 
     [SerializeField]
     private Material aMat;
@@ -33,6 +45,8 @@ public class GameManager : MonoBehaviour
     private GameObject m_breaker2;
     private GameObject m_sphere;
     private GameObject m_blocker;
+    private GameObject m_launcher;
+    private GameObject m_missile;
 
     private HashSet<int> m_holes;
     private Vector3 m_size;
@@ -45,13 +59,27 @@ public class GameManager : MonoBehaviour
 
     private PlayerPiece m_selectedPiece;
     private PlayerPiece m_overPiece;
+    private bool m_opponentTurn = true;
+    private bool m_missleActive = false;
+    private bool m_launcherActive = false;
+    private bool m_gameOver = false;
 
     // Start is called before the first frame update
     void Awake()
     {
         LayoutTiles();
         LayoutPieces();
+        m_launcher = Instantiate(launcherPrefab, GetBoardPosition(0, 0), launcherPrefab.transform.rotation);
+        m_launcher.GetComponent<LauncherPiece>().manager = this;
+        m_launcher.gameObject.SetActive(false);
+        m_missile = Instantiate(missilePrefab, GetBoardPosition(0, 0), missilePrefab.transform.rotation);
+        m_missile.GetComponent<MissilePiece>().manager = this;
+        m_missile.GetComponent<MissilePiece>().SetTarget(m_sphere.GetComponent<SpherePiece>());
+        m_missile.SetActive(false);
+
+        MakeLauncherAppear();
     }
+
     public Vector3 GetBoardPosition(int row, int col)
     {
         float x = m_xstart - m_size.x * spacingFactor * col;
@@ -60,6 +88,7 @@ public class GameManager : MonoBehaviour
         Vector3 pos = new Vector3(x, y, z);
         return pos;
     }
+
 
     private GameObject LayoutPiece(GameObject prefab, int r, int c)
     {
@@ -99,8 +128,8 @@ public class GameManager : MonoBehaviour
         int row = 0;
         int col = 1;
         m_holes = new HashSet<int>();
-        for (int hole = 0; hole < 4; hole++)
-            m_holes.Add(Random.Range(numCols, numCols * (numRows-1)));
+        for (int hole = 0; hole < 3; hole++)
+            m_holes.Add(Random.Range((hole+1)*numCols, (hole+1)*numCols+numCols));
 
         while (row < numRows)
         {
@@ -163,12 +192,129 @@ public class GameManager : MonoBehaviour
         return SetOver(null);
     }
 
-    public void movePiece(int row, int col)
+    public void SetPlayerComplete()
+    {
+        if (m_gameOver)
+            return;
+
+        if (m_missleActive)
+            MoveMissile();
+        else if (m_launcherActive)
+            LaunchMissile();
+        else
+            MakeLauncherAppear();
+    }
+
+    public void SetOpponentComplete()
+    {
+        m_opponentTurn = false;
+    }
+
+    private void MoveMissile()
+    {
+        m_opponentTurn = true;
+        m_missile.GetComponent<MissilePiece>().Advance();
+    }
+
+    private void LaunchMissile()
+    {
+        m_opponentTurn = true;
+        m_missile.transform.position = m_launcher.transform.position;
+        m_missile.GetComponent<Piece>().SetPos(m_launcher.GetComponent<LauncherPiece>().row, m_launcher.GetComponent<LauncherPiece>().col);
+        m_missile.SetActive(true);
+        m_missile.GetComponent<MissilePiece>().Advance();
+
+        m_launcher.SetActive(false);
+        m_missleActive = true;
+        m_launcherActive = false;
+    }
+
+    private void MakeLauncherAppear()
+    {
+        int col = Random.Range(0, numCols);
+        if (IsOccupied(0, col))
+            return;
+
+        m_launcher.GetComponent<LauncherPiece>().SetPresent(0, col);
+        SetOpponentComplete();
+        m_opponentTurn = true;
+        m_launcherActive = true;
+    }
+
+    private void SetGameOver()
+    {
+        m_gameOver = true;
+        m_gameOverText.SetActive(true);
+        m_replayButton.SetActive(true);
+    }
+
+    private void SetYouWon()
+    {
+        m_gameOver = true;
+        m_youWonText.SetActive(true);
+        m_replayButton.SetActive(true);
+    }
+
+    public void TestForImpact()
+    {
+        if (m_sphere.GetComponent<Piece>().row == 0)
+        {
+            SetYouWon();
+        }
+
+        if (m_missleActive)
+        {
+            int mrow = m_missile.GetComponent<Piece>().row;
+            int mcol = m_missile.GetComponent<Piece>().col;
+
+            if (m_sphere.GetComponent<PlayerPiece>().isAt(mrow, mcol))
+            {
+                m_missile.SetActive(false);
+                m_missile.GetComponent<MissilePiece>().Explode();
+                m_sphere.SetActive(false);
+                SetGameOver();
+            }
+            if (m_breaker1.GetComponent<PlayerPiece>().isAt(mrow, mcol))
+            {
+                m_breaker1.GetComponent<Piece>().SetPos(-1, -1);
+                m_breaker1.SetActive(false);
+                m_missile.GetComponent<MissilePiece>().Explode();
+                m_missile.SetActive(false);
+                m_missleActive = false;
+            }
+            if (m_breaker2.GetComponent<PlayerPiece>().isAt(mrow, mcol))
+            {
+                m_breaker2.GetComponent<Piece>().SetPos(-1, -1);
+                m_breaker2.SetActive(false);
+                m_missile.GetComponent<MissilePiece>().Explode();
+                m_missile.SetActive(false);
+                m_missleActive = false;
+            }
+            if (m_blocker.GetComponent<PlayerPiece>().isAt(mrow, mcol))
+            {
+                m_missile.GetComponent<MissilePiece>().Explode();
+                m_missile.SetActive(false);
+                m_missleActive = false;
+            }
+        }
+    }
+
+    public void RestartGame()
+    {
+        SceneManager.LoadScene(0);
+    }
+
+    public bool IsPlayerTurn()
+    {
+        return !m_gameOver && !m_opponentTurn;
+    }
+
+    public void MovePiece(int row, int col)
     {
         m_selectedPiece.MoveTo(row, col);
     }
 
-    public bool canMoveTo(int row, int col)
+    public bool CanMoveTo(int row, int col)
     {
         if (m_selectedPiece != null)
         {
